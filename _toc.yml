@@ -1,4 +1,7 @@
 format: jb-book
 root: index
+options:
+  numbered: True
 chapters: 
 - file: project-1
+  title: Project 1
