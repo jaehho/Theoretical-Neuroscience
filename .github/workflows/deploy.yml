@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - gh-pages
+      # `git push origin main:gh-pages` will push main to gh-pages
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
