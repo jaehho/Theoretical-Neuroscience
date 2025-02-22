@@ -1,2 +1,4 @@
 format: jb-book
-root: main
+root: index
+chapters: 
+- file: project-1
