@@ -83,6 +83,20 @@ def fast_spike_generator(
     
     return spikes_dict
 
+def raster_plot(ax:plt.Axes, spike_times:np.ndarray, highlight_ref: bool=True, refractory_periods: list=[], xlim=(0, 1), title="Raster plot"):
+    # Plot vertical lines for each spike.
+    ax.vlines(spike_times, 0, 1)
+    
+    # Overlay the refractory periods if highlight_ref is True.
+    if highlight_ref and any(refractory_periods):
+        for start, end in refractory_periods:
+            ax.axvspan(start, end, color='red', alpha=0.3)
+        
+    ax.set_ylim(0, 1)
+    ax.set_xlim(xlim)
+    ax.get_yaxis().set_visible(False)
+    ax.set_title(title)
+    
 class PoissonSpikeGenerator:
     def __init__(
         self,
