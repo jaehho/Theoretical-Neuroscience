@@ -1,166 +1,188 @@
 #import "conf.typ": ieee
 
 #show: ieee.with(
-  title: [Modeling the Visual Processing System with Gabor Filters and Spiking Neurons],
+  title: [],
   abstract: [
-    This paper presents a computational model of early visual processing using Gabor filters and spiking neurons to simulate encoding and decoding mechanisms in the visual system. Gabor functions model the receptive fields of V1 neurons, and spike trains are generated via a Poisson process with refractory periods. Visual stimuli are encoded by populations of neurons with varying orientations and spatial frequencies, and reconstructed linearly. Results demonstrate the model’s ability to preserve key image features, with reconstruction quality improving as population size increases. The model offers insights into fundamental neural dynamics.
+    This report presents computational models of neuronal dynamics, progressing from simple integrate-and-fire neurons to detailed multi-compartment Hodgkin-Huxley simulations. Synaptic conductance mechanisms and spike-triggered dynamics are incorporated to capture interactions between neurons. The models are used to simulate isolated neurons and two-neuron networks, revealing the effects of excitatory and inhibitory synapses on membrane potentials and spike timing. Finally, a multi-compartment model numerically solves the cable equation and demonstrates signal propagation down a neuron.
   ],
-  index-terms: ("Theoretical Neuroscience", "Spiking Neuron", "Gabor Filter"),
+  index-terms: ("Theoretical Neuroscience", "Cable Equation", "Hodgkin-Huxley"),
   authors: (
     (
       name: "Jaeho Cho",
       department: [MA391 - Theoretical Neuroscience],
       organization: [The Cooper Union for the Advancement of Science and Art],
       location: [New York City, NY],
-      email: "jaeho.cho@cooper.edu"
+      email: "jaeho.cho@cooper.edu",
     ),
   ),
-  bibliography: bibliography("refs.bib")
+  bibliography: bibliography("refs.bib"),
 )
 
 = Introduction
 
-Encoding refers to the process by which external visual stimuli are represented as patterns of neural activity. This begins when photoreceptors in the retina convert light into electrical signals. These signals are then processed through various neural pathways, including the lateral geniculate nucleus (LGN) and the primary visual cortex (V1), where features such as orientation, spatial frequency, and color are extracted. The efficient coding hypothesis suggests that the visual system optimizes these representations to maximize information transmission while minimizing redundancy, effectively compressing the vast amount of visual data encountered in natural environments @lohEfficientCodingHypothesis2014.
+Understanding how neurons generate and propagate electrical signals is a foundational goal in theoretical neuroscience. Different models of neurons allow for an understanding of how a neuron responds to inputs, how it communicates with other neurons, and how networks of neurons process information. Models range in levels of abstraction and assumptions, some capturing only the basic idea of a neuron firing a spike. Others much more detailed, modeling intricate biological processes inside the neuron, like the movement of ions and the channels of the cell.
 
-Decoding involves interpreting these neural representations to reconstruct or predict the original visual stimuli. Techniques such as functional magnetic resonance imaging (fMRI) have been used to decode visual experiences by mapping specific neural activation patterns to particular visual inputs. For instance, studies have demonstrated the ability to reconstruct images by decoding spike trains in a population of Retinal Ganglion Cells (RGC) as well as from fMRI data @miyawakiVisualImageReconstruction2008 @zhangReconstructionNaturalVisual2020.
+= Methodology
 
-This paper presents a computational approach to modeling the early visual processing system, focusing on the encoding and decoding of visual information. The receptive fields of neurons in the primary visual cortex (V1) are sensitive to features like orientation, spatial frequency, and phase which can be effectively modeled using Gabor functions. The spiking neuron models replicate the generation of action potentials in real neurons, providing insights into the dynamics of neural coding and information processing @dayanTheoreticalNeuroscienceComputational2001.
+== Integrate-and-Fire
 
-= Methods
-
-A grayscale image from Unsplash was used as the primary stimulus for this paper as it includes natural scenes with various textures and structures @unsplashPhotoHulkiOkan2020. A binary sinusoidal grating was generated as a secondary stimulus, which serves as a reference for evaluating the Gabor filter responses.
-
-The spatial receptive fields modelled as Gabor functions are of the
-form:
+The project initially implements a simple single-compartment integrate-and-fire neuron model, which can be described by the following equation:
 
 $
-D_s (x,y) = 1 / (2 pi sigma_x sigma_y) exp (- (x^2) / (2 sigma_x^2) - (y^2) / (2 sigma_y^2) cos (k x - phi))
+  c_m (d V) / (d t) = - i_m + I_e / A
 $
 
-where $sigma_x$ and $sigma_y$ define the spatial extent, $k$ is the
-preferred spatial frequency, and $phi$ is the preferred phase. In this paper, the phase $phi$ is set to $pi / 2$ to create a filter that splits the ON and OFF regions of the receptive field to each side of the center. The general appearance of the Gabor function is shown in @fig:gabor-filter.
+Which can be rewritten by multiplying the equation by the specific membrane resistance $r_m$, which is given by $r_m = 1 / (macron(g)_L)$, this gives the basic equation for the integrate-and-fire model:
+
+$
+  tau_m (d V) / (d t) = E_L - V + R_m I_e
+$<eq:integrate-and-fire>
+
+To generate action potentials in the model, equation @eq:integrate-and-fire is augmented by the rule that whenever V reaches the threshold value $V_"th"$, an action potential is fired and the potential is reset to $V"reset"$
+
+== Synaptic Conductances
+
+Synaptic inputs are incorporated into the integrate-and-fire model by adding a synaptic conductance term to the membrane potential equation, extending equation @eq:integrate-and-fire to include the synaptic conductance term:
+
+$
+  tau_m (d V) / (d t) = E_L - V - r_m macron(g)_s P_s (V - E_s) + R_m I_e
+$
+
+Where $P_"s"$ is the synaptic probability, which can be approximated as an exponential decay function:
+
+$
+  tau_s (d P_"s") / (d t) = - P_"s"
+$
+
+making the replacement $P_"s" arrow P_"s" + P_"max"(1 − P_"s")$ immediately after each presynaptic action potential.
+
+== Hodgkin-Huxley Model
+
+The membrane current of the Hodgkin-Huxley model is described by the following equation:
+$
+  i_m = macron(g)_L (V - E_L)\ + macron(g)_"K" n^4 (V - E_"K")\ + macron(g)_("Na") m^3 h (V - E_("Na"))
+$<eq:HH_current>
+
+Where the maximal conductances and reversal potentials are taken from the textbook as
+$g^(‾)_L = 0.003$ mS/mm²,
+$g^(‾)_"K" = 0.36$ mS/mm²,
+$g^(‾)_("Na") = 1.2$ mS/mm²,
+$E_L = - 54.387$ mV,
+$E_"K" = - 77$ mV and
+$E_("Na") = 50$ mV.
+And the gating variables are described by the following equations, fitted by Hodgkin and Huxley:
+
+$
+  alpha_n = (0.01 (V + 55)) / (1 - exp (- 0.1 (V + 55)))\
+  beta_n = 0.125 exp (- 0.0125 (V + 65))
+$
+
+$
+  alpha_m = (0.1 (V + 40)) / (1 - exp (- 0.1 (V + 40)))\
+  beta_m = 4 exp (- 0.0556 (V + 65))
+$
+
+$
+  alpha_h = 0.07 exp (- 0.05 (V + 65))\
+  beta_h = 1 / (1 + exp (- 0.1 (V + 35)))
+$
+
+== Multi-Compartment Neuron Model
+
+Each compartment of the multi-compartment neuron model is described by the following equation:
+
+$
+  c_m (d V_mu) / (d t) = - i_m^mu + I_e^mu / A_mu\
+  + g_(mu, mu + 1) lr((V_(mu + 1) - V_mu)) + g_(mu, mu - 1) lr((V_(mu - 1) - V_mu))
+$
+
+The multi-compartment neuron model was implemented following Appendix B of Chapter 6 in the textbook, which utilizes the Tridiagonal matrix algorithm
+to integrate the cable equation written in the following form:
+
+$
+  (d V_mu) / (d t) = A_mu V_(mu - 1) + B_mu V_mu + C_mu V_(mu + 1) + D_mu
+$
+
+where
+
+$
+  A_mu = c_m^(- 1) g_(mu, mu - 1)\
+  B_mu = - c_m^(- 1) lr((sum_i g^(‾)_i^mu + g_(mu, mu + 1) + g_(mu, mu - 1)))\
+  C_mu = c_m^(- 1) g_(mu, mu + 1)\
+  D_mu = c_m^(- 1) lr((sum_i g^(‾)_i^mu E_i + I_e^mu / A_mu))
+$
+
+= Results & Discussion
+
+== Single-Compartment Integrate-and-Fire
+
+The membrane potentials and post-synaptic probabilities of two single-compartment integrate-and-fire neurons with a randomly generated injection current were simulated and are presented in @fig:Excitatory_A_to_B_only, @fig:Excitatory_both, @fig:Inhibitory_A_to_B_only, @fig:Inhibitory_both, and @fig:Exc_A_to_B_Inh_B_to_A. These figures present all the combinations of excitatory and inhibitory synapses, revealing the expected effects of synaptic connections on the membrane potential.
+
+{
+#set image(width: 90%)
+#figure(
+  placement: none,
+  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from neuron A to neuron B",
+  image("figures/synapse_Excitatory_A_to_B_only.svg"),
+)<fig:Excitatory_A_to_B_only>
 
 #figure(
-  placement: auto,
-  scope: "parent",
-  image("figures/gabor.svg"),
-  caption: [The left side illustrates the gabor filter as a colormap with brighter values corresponding to ON regions and darker values corresponding to OFF regions. The right side shows the same gabor filter in a 3D representation.],
-)<fig:gabor-filter>
-
-// #place(
-//   auto,
-//   scope: "parent",
-//   float: true,
-//   [
-//     #block(
-//       width: 50%,
-//       [
-//         #figure(
-//           placement: auto,
-//           scope: "parent",
-//           image("figures/gabor.svg"),
-//           caption: [The left side illustrates the gabor filter as a colormap with brighter values corresponding to ON regions and darker values corresponding to OFF regions. The right side shows the same gabor filter in a 3D representation.],
-//         )<fig:gabor-filter>
-//       ]
-//     )
-//   ]
-// )
-
-The firing rate for a single neuron is estimated by computing the linear
-response:
-
-$ r_"est" = integral d x d y D (x,y) s (x ,y) $
-
-where $D (x,y)$ is the Gabor function and $s (x,y)$
-is the stimulus. The response generated by this estimation is demonstrated in @fig:grating-gabor-overlays; and the relative size of this gabor filter to the natural image is shown in @fig:image-gabor-overlay. 
+  placement: none,
+  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from both neuron A to neuron B and neuron B to neuron A",
+  image("figures/synapse_Excitatory_both.svg"),
+)<fig:Excitatory_both>
 
 #figure(
-  placement: auto,
-  image("figures/grating_gabor_overlays.svg"),
-  caption: [The gabor overlayed on vertical gratings at different locations of the image. The first instance with the gabor filter entirely on the black strip outputs a response of 0; the second location with the filter split between a black strip under the OFF region and a white strip under the ON region outputs a response of approximately 115; The third and fourth instances output responses of 0 and -115, respectively.],
-)<fig:grating-gabor-overlays>
+  placement: none,
+  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an inhibitory synapse from neuron A to neuron B",
+  image("figures/synapse_Inhibitory_A_to_B_only.svg"),
+)<fig:Inhibitory_A_to_B_only>
 
 #figure(
-  placement: bottom,
-  image("figures/image_gabor_overlay.svg"),
-  caption: [Overlay of Gabor filter on natural scene. The black box outlines the total size of the neuron, while the black and white regions represent the ON and OFF responses of the filter.]
-)<fig:image-gabor-overlay>
-
-Each neuron in the model generates a spike train based on a scaled estimated firing rate ($r_"est"$); the spike trains are generated using a homogeneous Poisson process with an absolute refractory period of $1 "ms"$ and relative refractory period with mean $10 "ms"$ @Project1SpikeTrain. The firing rate is then averaged over a time window to obtain the more realistic estimated firing rate.
-
-Two populations of neurons are used to model the visual system: a population of gabor filters with an orientation of $phi = pi "rad"$ and another with $phi = -pi/2$; these orientations differentiated the preferred orientations of the filters, acting as vertical and horizontal edge detectors. The population response is given in the form of a 2D array appearing as the edges of the image, as shown in @fig:gabor-filter-bank. The figure illustrates the necessity of using populations of different orientations to capture the full range of features in the image as the edges of orthogonal to the preferred orientation of the filter are not detected. 
+  placement: none,
+  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an inhibitory synapse from both neuron A to neuron B and neuron B to neuron A",
+  image("figures/synapse_Inhibitory_both.svg"),
+)<fig:Inhibitory_both>
 
 #figure(
-  placement: bottom,
-  scope: "parent",
-  image("figures/gabor_filter_bank.svg"),
-  caption: [Images encoded by a Gabor Filter Bank with wavelengths varying incrementally from 16 to 64 pixels and orientations varying from 0 to 135 degrees.],
-)<fig:gabor-filter-bank>
+  placement: none,
+  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from neuron A to neuron B and an inhibitory synapse from neuron B to neuron A",
+  image("figures/synapse_Exc_A_to_B_Inh_B_to_A.svg"),
+)<fig:Exc_A_to_B_Inh_B_to_A>
+}
 
-
-// #place(
-//   auto,
-//   scope: "parent",
-//   float: true,
-//   [
-//     #block(
-//       width: 80%,
-//       [
-//         #figure(
-//           placement: auto,
-//           scope: "parent",
-//           image("figures/gabor_filter_bank.svg"),
-//           caption: [Images encoded by a Gabor Filter Bank with wavelengths varying incrementally from 16 to 64 pixels and orientations varying from 0 to 135 degrees.],
-//         )<fig:gabor-filter-bank>
-//       ]
-//     )
-//   ]
-// )
-
-The primary reconstruction method used in this paper is a simple cumulative sum in the direction of the populations preferred orientation, where the average estimated firing rates of the neurons are used to reconstruct the original image; these reconstructed images from each population are then averaged to create the final decoded image. 
-
-= Results
-
-@fig:population-responses-1D shows the various firing rates of neurons down the center of the image depending on the spike train generation model. As expected, the models with no refractory effects are more closely aligned with the original $r_"est"$ values. The models with refractory effects appear to be a scaled and shifted version of the original $r_"est"$ values. As the refractory effects cause the removal of spikes, the estimate firing rates should be lower at higher frequencies, and given the large relative refractory period, the estimated firing rate at even lower frequencies is also lower. The figure also illustrates how a longer period of decoding results in less deviation from the original $r_"est"$ values.
+Taking inspiration from figure 5.20 in the textbook @dayanTheoreticalNeuroscienceComputational2001, two synaptically coupled integrate-and-fire neurons were simulated. The synaptic connections were modeled as either both excitatory or both inhibitory, and the resulting membrane potentials were plotted in @fig:constant_current. The textbook's model indicates that having both excitatory synapses produce an alternating, out-of-phase pattern of activity, while having both inhibitory synapses produce synchronous firing. This behavior is not replicated in the simulation of this project, where the intuitively expected behavior is observed. The textbook addresses the non-intuitive behavior of their model, but explain that with a sufficiently long synaptic time constant, the model produces the unexpected behavior.
 
 #figure(
-  placement: bottom,
-  image("figures/population_responses_1D.svg"),
-  caption: [Responses of neurons down the center of the image starting from the top to the 50th neuron. ],
-)<fig:population-responses-1D>
+  scope: "column",
+  placement: none,
+  caption: "Two single-compartment integrate-and-fire neurons with constant current injection, with either both excitatory or both inhibitory synapses. Inspired to replicate figure 5.20 in the textbook.",
+  grid(
+    image("figures/constant_current_Excitatory_both.svg"),
+    image("figures/constant_current_Inhibitory_both.svg"),
+  ),
+)<fig:constant_current>
 
-The effect of changing the number of neurons in the population is illustrated in @fig:gabor-filter-bank-decoded. For the first two reconstructions, the majority of the major features of the image are preserved, like the tree and edge of the building, however in the second reconstruction, the lamp post is not clearly distinguished. The relative entropy of the decoded images relative to the original image was computed to be 0.22, 0.20, and infinity for the first, second, and third images respectively.
+== Multi-compartment
 
-#figure(
-  placement: bottom,
-  image("figures/gabor_filter_bank_decoded.svg"),
-  caption: [The top image shows the decoded image using a population of 286 vertical neurons and 376 horizontal neurons (286 x 376). The image in the middle was decoded from an image of (114 x 150) neurons. The bottom image was decoded from (57 x 75) neurons.]
-)<fig:gabor-filter-bank-decoded>
-
-In order for the image to be reconstructed from the population responses, they need to be scaled such that mean of the population response is 0. This is because the cumulative sum used to decode the response is a linear operation, and if the mean of the population response is not 0, the reconstructed image will be biased towards the mean of the population response, causing a gradient effect. Histograms of the population responses are shown in @fig:population-responses-histograms. The histograms generated from the nonideal spike train generation models display a discrete distribution of values, this is understandable as the firing rates are derived from counting the number of spikes in a time window, which vary by integers. The relative entropy was computer to be about 0.36 bits for the base population response.
+The multi-compartment neuron model is presented in @fig:multicompartment, where the propagation of the membrane potential can be seen through the change in voltage over time at select compartments or the change in voltage at different compartments (distances) at select times. The figure also shows the gating variables of the first compartment are also presented and match the behavior illustrated in figure 5.11 in the textbook. An alternative visualization of the multi-compartment model is presented in @fig:multicompartment_heatmap, where the membrane potential is visualized as a heatmap where the x-axis represents times, and the y-axis represents the distance from the soma.
 
 #figure(
-  placement: bottom,
-  image("figures/population_responses_histograms.svg"),
-  caption: [Population responses of the neurons in the population. The top histogram shows the pure firing rate estimation without spike train generation. The other histograms show the distribution of firing rates generated from various spike train generation models. The line histograms are generated from 256 samples of the population response.],
-)<fig:population-responses-histograms>
+  image("figures/multicompartment.svg"),
+  caption: "Multi-compartment neuron model",
+  placement: none,
+)<fig:multicompartment>
 
-#pagebreak()
-= Discussion
+#figure(
+  image("figures/multicompartment_heatmap.svg"),
+  caption: "Multi-compartment neuron model visualized with heatmap",
+  placement: none,
+)<fig:multicompartment_heatmap>
 
-One of the major causes of the imperfect reconstruction is the spike train generation adding noise to the population response. This noise in the population response results in streaks in the decoded images as an offset neuron causes a shift down the line of the cumulative sum. @fig:decoded-population-responses shows how the population response is improved with longer periods of spike detection and absence of refractory effects. 
+@fig:multicompartment_network shows the membrane potential of two neurons connected by an excitatory synapse. Once the action potential reaches the end of the first neuron, it triggers the synaptic conductance of the second neuron, which then propagates the action potential down the second neuron.
 
-#place(
-  auto,
-  float: true,
-  [#figure(
-    image("figures/decoded_population_responses.svg"),
-    caption: [Decoded Population Responses],
-  )<fig:decoded-population-responses>]
-)
-
-Given the relatively small number of neurons in the population, it is surprising to see that the majority of the features of the image are preserved. As was illustrated in @fig:gabor-filter-bank-decoded, the increase in the number of neurons significantly improves the quality of the image and increases the signal to noise ratio.
-
-This project integrates well-established principles of visual processing with computational methods where the use of Gabor functions as receptive field models provides a physiologically plausible basis for early visual processing. The experiments with multiple Gabor filters demonstrate how different scales and orientations contribute unique information about image structure, an observation that aligns with findings in biological systems where multiple populations of neurons respond selectively to different stimulus features @dayanTheoreticalNeuroscienceComputational2001.
-
-Future work could explore the implementation of color information as well as time-receptive fiels to decode videos.
+#figure(
+  image("figures/multicompartment_network.svg"),
+  caption: "Propagation of an action potential through multi-compartment models and across a synapse",
+  placement: none,
+)<fig:multicompartment_network>
