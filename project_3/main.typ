@@ -1,11 +1,11 @@
 #import "conf.typ": ieee
 
 #show: ieee.with(
-  title: [],
+  title: [Model Neurons],
   abstract: [
     This report presents computational models of neuronal dynamics, progressing from simple integrate-and-fire neurons to detailed multi-compartment Hodgkin-Huxley simulations. Synaptic conductance mechanisms and spike-triggered dynamics are incorporated to capture interactions between neurons. The models are used to simulate isolated neurons and two-neuron networks, revealing the effects of excitatory and inhibitory synapses on membrane potentials and spike timing. Finally, a multi-compartment model numerically solves the cable equation and demonstrates signal propagation down a neuron.
   ],
-  index-terms: ("Theoretical Neuroscience", "Cable Equation", "Hodgkin-Huxley"),
+  index-terms: ("Theoretical Neuroscience", "Cable Equation", "Hodgkin-Huxley", "Integrate-and-Fire", "Multi-Compartment Model"),
   authors: (
     (
       name: "Jaeho Cho",
@@ -38,7 +38,7 @@ $
   tau_m (d V) / (d t) = E_L - V + R_m I_e
 $<eq:integrate-and-fire>
 
-To generate action potentials in the model, equation @eq:integrate-and-fire is augmented by the rule that whenever V reaches the threshold value $V_"th"$, an action potential is fired and the potential is reset to $V"reset"$
+To generate action potentials in the model, equation @eq:integrate-and-fire is augmented by the rule that whenever V reaches the threshold value $V_"th"$, an action potential is fired and the potential is reset to $V_"reset"$
 
 == Synaptic Conductances
 
@@ -118,44 +118,45 @@ $
 
 The membrane potentials and post-synaptic probabilities of two single-compartment integrate-and-fire neurons with a randomly generated injection current were simulated and are presented in @fig:Excitatory_A_to_B_only, @fig:Excitatory_both, @fig:Inhibitory_A_to_B_only, @fig:Inhibitory_both, and @fig:Exc_A_to_B_Inh_B_to_A. These figures present all the combinations of excitatory and inhibitory synapses, revealing the expected effects of synaptic connections on the membrane potential.
 
-{
-#set image(width: 90%)
-#figure(
-  placement: none,
-  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from neuron A to neuron B",
-  image("figures/synapse_Excitatory_A_to_B_only.svg"),
-)<fig:Excitatory_A_to_B_only>
+#{
+  set image(width: 78%)
+  [
+    #figure(
+      placement: none,
+      caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from neuron A to neuron B",
+      image("figures/synapse_Excitatory_A_to_B_only.svg"),
+    )<fig:Excitatory_A_to_B_only>
 
-#figure(
-  placement: none,
-  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from both neuron A to neuron B and neuron B to neuron A",
-  image("figures/synapse_Excitatory_both.svg"),
-)<fig:Excitatory_both>
+    #figure(
+      placement: none,
+      caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from both neuron A to neuron B and neuron B to neuron A",
+      image("figures/synapse_Excitatory_both.svg"),
+    )<fig:Excitatory_both>
 
-#figure(
-  placement: none,
-  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an inhibitory synapse from neuron A to neuron B",
-  image("figures/synapse_Inhibitory_A_to_B_only.svg"),
-)<fig:Inhibitory_A_to_B_only>
+    #figure(
+      placement: none,
+      caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an inhibitory synapse from neuron A to neuron B",
+      image("figures/synapse_Inhibitory_A_to_B_only.svg"),
+    )<fig:Inhibitory_A_to_B_only>
 
-#figure(
-  placement: none,
-  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an inhibitory synapse from both neuron A to neuron B and neuron B to neuron A",
-  image("figures/synapse_Inhibitory_both.svg"),
-)<fig:Inhibitory_both>
+    #figure(
+      placement: none,
+      caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an inhibitory synapse from both neuron A to neuron B and neuron B to neuron A",
+      image("figures/synapse_Inhibitory_both.svg"),
+    )<fig:Inhibitory_both>
 
-#figure(
-  placement: none,
-  caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from neuron A to neuron B and an inhibitory synapse from neuron B to neuron A",
-  image("figures/synapse_Exc_A_to_B_Inh_B_to_A.svg"),
-)<fig:Exc_A_to_B_Inh_B_to_A>
+    #figure(
+      placement: none,
+      caption: "Two single-compartment integrate-and-fire neurons with random current injection, with an excitatory synapse from neuron A to neuron B and an inhibitory synapse from neuron B to neuron A",
+      image("figures/synapse_Exc_A_to_B_Inh_B_to_A.svg"),
+    )<fig:Exc_A_to_B_Inh_B_to_A>
+  ]
 }
 
 Taking inspiration from figure 5.20 in the textbook @dayanTheoreticalNeuroscienceComputational2001, two synaptically coupled integrate-and-fire neurons were simulated. The synaptic connections were modeled as either both excitatory or both inhibitory, and the resulting membrane potentials were plotted in @fig:constant_current. The textbook's model indicates that having both excitatory synapses produce an alternating, out-of-phase pattern of activity, while having both inhibitory synapses produce synchronous firing. This behavior is not replicated in the simulation of this project, where the intuitively expected behavior is observed. The textbook addresses the non-intuitive behavior of their model, but explain that with a sufficiently long synaptic time constant, the model produces the unexpected behavior.
 
 #figure(
-  scope: "column",
-  placement: none,
+  placement: auto,
   caption: "Two single-compartment integrate-and-fire neurons with constant current injection, with either both excitatory or both inhibitory synapses. Inspired to replicate figure 5.20 in the textbook.",
   grid(
     image("figures/constant_current_Excitatory_both.svg"),
@@ -170,13 +171,13 @@ The multi-compartment neuron model is presented in @fig:multicompartment, where 
 #figure(
   image("figures/multicompartment.svg"),
   caption: "Multi-compartment neuron model",
-  placement: none,
+  placement: top,
 )<fig:multicompartment>
 
 #figure(
   image("figures/multicompartment_heatmap.svg"),
   caption: "Multi-compartment neuron model visualized with heatmap",
-  placement: none,
+  placement: top,
 )<fig:multicompartment_heatmap>
 
 @fig:multicompartment_network shows the membrane potential of two neurons connected by an excitatory synapse. Once the action potential reaches the end of the first neuron, it triggers the synaptic conductance of the second neuron, which then propagates the action potential down the second neuron.
@@ -184,5 +185,5 @@ The multi-compartment neuron model is presented in @fig:multicompartment, where 
 #figure(
   image("figures/multicompartment_network.svg"),
   caption: "Propagation of an action potential through multi-compartment models and across a synapse",
-  placement: none,
+  placement: auto,
 )<fig:multicompartment_network>
